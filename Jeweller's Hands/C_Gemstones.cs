@@ -1,5 +1,4 @@
-﻿using Eto.Forms;
-using Rhino;
+﻿using Rhino;
 using Rhino.Commands;
 using Rhino.Display;
 using Rhino.DocObjects;
@@ -323,6 +322,10 @@ namespace JewellersHands
             }
 
             int gemIndex = ChooseGemstone(gemList);
+            if(gemIndex == -1)
+            { 
+            return  Result.Cancel;
+            }
             string gemFileName = gemList[gemIndex - 1];
 
             if (gemIndex == -1)
