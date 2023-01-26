@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using Eto.Drawing;
 using Rhino;
 using Rhino.Commands;
@@ -20,6 +21,65 @@ namespace JewellersHands
         public static C_GemstonesCount Instance { get; private set; }
 
         public override string EnglishName => "JH_GemstonesCount";
+        private double GemstonesCountOptions(string prompt)
+        {
+            //Choose a value
+            Rhino.Input.Custom.GetOption gp = new Rhino.Input.Custom.GetOption();
+            Rhino.Input.Custom.OptionToggle bakeTextDot = new Rhino.Input.Custom.OptionToggle(JHandsPlugin.Instance.BakeTextDot, "Off", "On");
+            Rhino.Input.Custom.OptionToggle changeGemstonesColor = new Rhino.Input.Custom.OptionToggle(JHandsPlugin.Instance.ChangeGemstonesColor, "Off", "On");
+            gp.SetCommandPrompt(prompt);
+            gp.AddOptionToggle("BakeTextDots", ref bakeTextDot);
+            gp.AddOptionToggle("ChangeGemstonesColor", ref changeGemstonesColor);
+            gp.AcceptNothing(true);
+
+            while (true)
+            {
+                // perform the get operation. This will prompt the user to input a point, but also
+                // allow for command line options defined above
+
+                Rhino.Input.GetResult get_rc = gp.Get();
+
+                if (get_rc == Rhino.Input.GetResult.Cancel)
+                {
+                    RhinoApp.WriteLine("Exit");
+                    break;
+                }
+                else if (get_rc == Rhino.Input.GetResult.Option)
+                {
+                    if (gp.OptionIndex() == 1) //BakeTextDot
+                    {
+                        if (JHandsPlugin.Instance.BakeTextDot)
+                        {
+                            JHandsPlugin.Instance.BakeTextDot = false;
+                            bakeTextDot.CurrentValue = false;
+                        }
+                        else
+                        {
+                            JHandsPlugin.Instance.BakeTextDot = true;
+                            bakeTextDot.CurrentValue = true;
+                        }
+                    }
+                    else if (gp.OptionIndex() == 2) //ChangeGemstonesColor
+                    {
+                        if (JHandsPlugin.Instance.ChangeGemstonesColor)
+                        {
+                            JHandsPlugin.Instance.ChangeGemstonesColor = false;
+                            changeGemstonesColor.CurrentValue = false;
+                        }
+                        else
+                        {
+                            JHandsPlugin.Instance.ChangeGemstonesColor = true;
+                            changeGemstonesColor.CurrentValue = true;
+                        }
+                    }
+                }
+                else if (gp.CommandResult() == Rhino.Commands.Result.Success)
+                {
+                    return 1;
+                }
+            }
+            return -1;
+        }
 
         private void BakeTextDot(Point3d point, string number, ObjectAttributes att)
         {
@@ -29,7 +89,10 @@ namespace JewellersHands
 
         protected override Result RunCommand(RhinoDoc doc, RunMode mode)
         {
-            // TODO: complete command.
+            double configurationResult = GemstonesCountOptions("Choose the Gemstone Count configuration");
+
+            if (configurationResult == -1) { return Result.Failure; }
+
             Layer GemLayerRoot = Rhino.RhinoDoc.ActiveDoc.Layers.FindName("Gems");
 
             if (GemLayerRoot == null)
@@ -68,10 +131,11 @@ namespace JewellersHands
                 }
             }
 
-
             List<string> dictionaryCaseKeys = new List<string>();
+            List<Point3d> allPoints = new List<Point3d>();
             var dictionaryTypeHues = new Dictionary<string, float>();
             var dictionaryCasePts = new Dictionary<string, List<Point3d>>(); //Key = Type+Case (ex: ASC 2x10) _ Value = as many points as found.
+            var dictionaryCaseObj = new Dictionary<string, List<RhinoObject>>(); //Key = Type+Case (ex: ASC 2x10) _ Value = as many objects as found.
 
 
             GemTypeNames.Sort();
@@ -98,16 +162,22 @@ namespace JewellersHands
                         dictionaryCaseKeys.Add(dictionaryKey);
 
                         List<Point3d> casePts = new List<Point3d>();
+                        List<RhinoObject> caseObj = new List<RhinoObject>();
+
                         foreach (Rhino.DocObjects.RhinoObject obj in Rhino.RhinoDoc.ActiveDoc.Objects.FindByLayer(GemLayer))
                         {
                             if (obj.Name == "Gem")
                             {
                                 Point3d textDotPt = Brep.TryConvertBrep(obj.Geometry).GetBoundingBox(true).Center;
+                                allPoints.Add(textDotPt);
                                 casePts.Add(textDotPt);
+
+                                caseObj.Add(obj);
                             }
                         }
 
                         dictionaryCasePts.Add(dictionaryKey, casePts);
+                        dictionaryCaseObj.Add(dictionaryKey, caseObj);
 
                     }
                 }
@@ -131,10 +201,8 @@ namespace JewellersHands
 
             Plane pXY = Plane.WorldXY;
             Circle circleC = new Circle(pXY, (size / 2) * 1.5);
-            circleC.Center = new Point3d(size*0.4, -size/2, -0.1);
+            circleC.Center = new Point3d(size * 0.4, -size / 2, -0.1);
             Curve circle = circleC.ToNurbsCurve();
-
-            //doc.Objects.AddCurve(circle);
             Hatch hatch = Rhino.Geometry.Hatch.Create(circle, 0, 0, 1, 1)[0];
 
             Vector3d nextLine = new Vector3d(0, -size * 1.6, 0);
@@ -143,6 +211,17 @@ namespace JewellersHands
             int gemTotalAmount = 0;
 
             Point3d caseTextDotPt = circleC.Center;
+
+            BoundingBox allPointsBB = new BoundingBox(allPoints);
+            Point3d Corner = allPointsBB.GetCorners()[1];
+            Vector3d Diagonal = Corner - allPointsBB.Center;
+            Corner += Diagonal*0.25;
+
+            Transform movetoCorner = Transform.Translation(((Vector3d)Corner));
+            caseTextDotPt.Transform(movetoCorner);
+            hatch.Transform(movetoCorner);
+            pXY.Transform(movetoCorner);
+            text3d.TextPlane = pXY;
 
             foreach (string gemType in GemTypeNames)
             {
@@ -160,21 +239,25 @@ namespace JewellersHands
                     gemTypeAmount += casePoints.Count;
                 }
                 text3d.Text += gemType + " = " + gemTypeAmount + "\n";
-                gemTotalAmount += gemTotalAmount;
+                gemTotalAmount += gemTypeAmount;
 
                 foreach (string gemCase in gemTypeCases)
                 {
                     List<Point3d> casePoints = dictionaryCasePts[gemCase];
+                    List<RhinoObject> caseObjects = dictionaryCaseObj[gemCase];
+
                     float coef = (((float)1 / totalTypeCases) * caseCount);
                     float hue = dictionaryTypeHues[gemType];
                     float sat = ((float)0.3 + (coef * (float)0.7));
                     //float sat = 1; //(1 / totalTypeCases) * caseCount;
                     float bri = ((float)0.3 + (coef * (float)0.7));
                     Eto.Drawing.Color color = new ColorHSB(hue, sat, bri).ToColor();
+                    System.Drawing.Color caseColor = System.Drawing.Color.FromArgb(color.Rb, color.Gb, color.Bb);
+
 
                     Layer newTagLayer = new Layer();
                     newTagLayer.Name = generalCaseCount.ToString() + ": " + gemCase;
-                    newTagLayer.Color = System.Drawing.Color.FromArgb(color.Rb, color.Gb, color.Bb);
+                    newTagLayer.Color = caseColor;
                     newTagLayer.ParentLayerId = tagLayerGuid;
                     int layerIndex = doc.Layers.Add(newTagLayer);
                     Rhino.DocObjects.ObjectAttributes att = new Rhino.DocObjects.ObjectAttributes();
@@ -188,8 +271,26 @@ namespace JewellersHands
 
                     foreach (Point3d point in casePoints)
                     {
-                        BakeTextDot(point, generalCaseCount.ToString(), att);
+                        if(JHandsPlugin.Instance.BakeTextDot)
+                        {
+                            BakeTextDot(point, generalCaseCount.ToString(), att);
+                        }
                     }
+                    foreach (RhinoObject obj in caseObjects)
+                    {
+                        if (JHandsPlugin.Instance.ChangeGemstonesColor)
+                        {
+                            obj.Attributes.ObjectColor = caseColor;
+                            obj.Attributes.ColorSource = ObjectColorSource.ColorFromObject;
+                            obj.CommitChanges();
+                        }
+                        else
+                        {
+                            obj.Attributes.ColorSource = ObjectColorSource.ColorFromLayer;
+                            obj.CommitChanges();
+                        }
+                    }
+
                     double caseAmount = casePoints.Count;
 
                     string[] gemCaseName = gemCase.Split(' ');

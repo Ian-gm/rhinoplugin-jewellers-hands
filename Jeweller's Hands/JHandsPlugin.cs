@@ -18,7 +18,14 @@ namespace JewellersHands
 
         public bool Mensajitos;
 
-        public bool PreviewGems;
+        //Public variables of C_Gemstones
+        public bool PreviewGems = false;
+
+        //Public variables of C_GemstonesCount
+        public bool BakeTextDot = false;
+        public bool ChangeGemstonesColor = true;
+
+
 
         public JHandsPlugin()
         {
