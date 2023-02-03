@@ -112,7 +112,7 @@ namespace JewellersHands
 
                 foreach (Rhino.DocObjects.RhinoObject obj in Rhino.RhinoDoc.ActiveDoc.Objects.FindByLayer(GemLayer))
                 {
-                    if (obj.Name == "Gem")
+                    if (obj.Name == "Gem" && !obj.IsHidden) 
                     {
                         LayerIsEmpty = false;
                         break;
@@ -145,12 +145,10 @@ namespace JewellersHands
 
             foreach (string GemTypeName in GemTypeNames)
             {
-                int gemTypeAmount = 0;
+                //int gemTypeAmount = 0;
 
                 float gemTypeHue = (359 / GemTypeNames.Count) * indexForeachTypeCount;
-
                 dictionaryTypeHues.Add(GemTypeName, gemTypeHue);
-
 
                 foreach (Layer GemLayer in notEmptyGemLayerChildren)
                 {
@@ -166,7 +164,7 @@ namespace JewellersHands
 
                         foreach (Rhino.DocObjects.RhinoObject obj in Rhino.RhinoDoc.ActiveDoc.Objects.FindByLayer(GemLayer))
                         {
-                            if (obj.Name == "Gem")
+                            if (obj.Name == "Gem" && !obj.IsHidden)
                             {
                                 Point3d textDotPt = Brep.TryConvertBrep(obj.Geometry).GetBoundingBox(true).Center;
                                 allPoints.Add(textDotPt);
@@ -175,10 +173,8 @@ namespace JewellersHands
                                 caseObj.Add(obj);
                             }
                         }
-
                         dictionaryCasePts.Add(dictionaryKey, casePts);
                         dictionaryCaseObj.Add(dictionaryKey, caseObj);
-
                     }
                 }
 

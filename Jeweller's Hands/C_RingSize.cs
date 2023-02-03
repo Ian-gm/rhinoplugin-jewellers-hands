@@ -22,7 +22,6 @@ namespace JewellersHands
             // "Get" classes support command line options.
             Rhino.Input.Custom.GetNumber gp = new Rhino.Input.Custom.GetNumber();
             
-
             int optionIndex = 1;
             double ISOvalue;
             double radius;
