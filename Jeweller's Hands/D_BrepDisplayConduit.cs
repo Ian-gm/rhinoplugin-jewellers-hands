@@ -11,7 +11,7 @@ namespace JewellersHands
     public class D_BrepDisplayConduit : DisplayConduit
     {
         public static D_BrepDisplayConduit Instance { get; private set; }
-        Brep gemBrep { get; set; }
+        Brep[] gemBreps { get; set; }
 
         public D_BrepDisplayConduit()
         {
@@ -21,17 +21,33 @@ namespace JewellersHands
         /// <summary>
         /// Gets any Brep from the Rhino Model, extracts the Analysis Mesh, and sets Vertex Colors.
         /// </summary>
-        public void SetObjects(Brep newGemBrep)
+        public void SetObjects(Brep[] newGemBreps)
         {
-
-            gemBrep = newGemBrep;
+            gemBreps = newGemBreps;
             Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
-            
         }
 
         protected override void PostDrawObjects(DrawEventArgs e)
         {
-            if (JHandsPlugin.Instance.PreviewGems)
+            bool run;
+
+            Guid[] runningCommands = Rhino.Commands.Command.GetCommandStack();
+            Guid runningCommand = runningCommands[runningCommands.Length-1];
+
+            if (runningCommand == C_Gemstones.Instance.Id)
+            {
+                run = JHandsPlugin.Instance.PreviewGems;
+            }
+            else if (runningCommand == C_Array.Instance.Id)
+            { 
+                run = JHandsPlugin.Instance.PreviewArray;
+            }
+            else
+            {
+                run = false;
+            }
+
+            if(run)
             {
                 DisplayMaterial material = new DisplayMaterial();
                 material.Diffuse = System.Drawing.Color.Gray;
@@ -40,10 +56,13 @@ namespace JewellersHands
                 material.Transparency = 0.5;
 
                 base.PostDrawObjects(e);
-                if (null != gemBrep)
+                if (null != gemBreps)
                 {
-                    e.Display.DrawBrepShaded(gemBrep, material);
-                    e.Display.DrawBrepWires(gemBrep, System.Drawing.Color.Black);
+                    foreach(Brep gem in gemBreps) 
+                    {
+                        e.Display.DrawBrepShaded(gem, material);
+                        e.Display.DrawBrepWires(gem, System.Drawing.Color.Black);
+                    }
                 }
             }
         }

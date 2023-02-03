@@ -360,7 +360,7 @@ namespace JewellersHands
             }
 
             JHandsPlugin.Instance.BrepDisplay.Enabled = true;
-            JHandsPlugin.Instance.BrepDisplay.SetObjects(gemBrep);
+            JHandsPlugin.Instance.BrepDisplay.SetObjects(new Brep[] { gemBrep });
 
             //Gems data as dictionary. Key = Filename. Values = (int) type / (string) Abbreviation
 
@@ -399,15 +399,15 @@ namespace JewellersHands
                 if (diameter < 0) { JHandsPlugin.Instance.BrepDisplay.Enabled = false; return Result.Failure; }
                 var diameterScale = Rhino.Geometry.Transform.Scale(XY, diameter, diameter, 1);
                 gemBrep.Transform(diameterScale);
-                JHandsPlugin.Instance.BrepDisplay.SetObjects(gemBrep);
+                JHandsPlugin.Instance.BrepDisplay.SetObjects(new Brep[] { gemBrep });
                 RandomMessage(((int)diameter));
 
                 height = PickPercentage("Depth of Gem", diameter);
                 if (height < 0) { JHandsPlugin.Instance.BrepDisplay.Enabled = false; return Result.Failure; }
                 var heightScale = Rhino.Geometry.Transform.Scale(XY, 1, 1, height);
                 gemBrep.Transform(heightScale);
-                JHandsPlugin.Instance.BrepDisplay.SetObjects(gemBrep);
-                RandomMessage(((int)height));
+                JHandsPlugin.Instance.BrepDisplay.SetObjects(new Brep[] { gemBrep });
+                RandomMessage((int)height);
 
                 values = new double[] { diameter, height };
             }
@@ -417,14 +417,14 @@ namespace JewellersHands
                 if (sizeY < 0) { JHandsPlugin.Instance.BrepDisplay.Enabled = false; return Result.Failure; }
                 var sizeYScale = Rhino.Geometry.Transform.Scale(XY, 1, sizeY, 1);
                 gemBrep.Transform(sizeYScale);
-                JHandsPlugin.Instance.BrepDisplay.SetObjects(gemBrep);
+                JHandsPlugin.Instance.BrepDisplay.SetObjects(new Brep[] { gemBrep });
                 RandomMessage(((int)sizeY));
 
                 sizeX = PickValue("Top Width of Gem");
                 if (sizeX < 0) { JHandsPlugin.Instance.BrepDisplay.Enabled = false; return Result.Failure; }
                 var sizeXScale = Rhino.Geometry.Transform.Scale(XY, sizeX, 1, 1);
                 gemBrep.Transform(sizeXScale);
-                JHandsPlugin.Instance.BrepDisplay.SetObjects(gemBrep);
+                JHandsPlugin.Instance.BrepDisplay.SetObjects(new Brep[] { gemBrep });
                 RandomMessage(((int)sizeX));
 
                 sizeX2 = PickValue("Bottom Width of Gem");
@@ -437,14 +437,14 @@ namespace JewellersHands
                 gemBrep.Transform(rotateXZ);
                 taperTransform.Morph(gemBrep);
                 gemBrep.Transform(reverseRotateXZ);
-                JHandsPlugin.Instance.BrepDisplay.SetObjects(gemBrep);
+                JHandsPlugin.Instance.BrepDisplay.SetObjects(new Brep[] { gemBrep });
                 RandomMessage(((int)sizeX2));
 
                 height = PickPercentage("Depth of Gem", sizeX);
                 if (height < 0) { JHandsPlugin.Instance.BrepDisplay.Enabled = false; return Result.Failure; }
                 var heightScale = Rhino.Geometry.Transform.Scale(XY, 1, 1, height);
                 gemBrep.Transform(heightScale);
-                JHandsPlugin.Instance.BrepDisplay.SetObjects(gemBrep);
+                JHandsPlugin.Instance.BrepDisplay.SetObjects(new Brep[] { gemBrep });
                 RandomMessage(((int)height));
 
 
@@ -456,21 +456,21 @@ namespace JewellersHands
                 if (sizeY < 0) { JHandsPlugin.Instance.BrepDisplay.Enabled = false; return Result.Failure; }
                 var sizeYScale = Rhino.Geometry.Transform.Scale(XY, 1, sizeY, 1);
                 gemBrep.Transform(sizeYScale);
-                JHandsPlugin.Instance.BrepDisplay.SetObjects(gemBrep);
+                JHandsPlugin.Instance.BrepDisplay.SetObjects(new Brep[] { gemBrep });
                 RandomMessage(((int)sizeY));
 
                 sizeX = PickValue("Width of Gem");
                 if (sizeX < 0) { JHandsPlugin.Instance.BrepDisplay.Enabled = false; return Result.Failure; }
                 var sizeXScale = Rhino.Geometry.Transform.Scale(XY, sizeX, 1, 1);
                 gemBrep.Transform(sizeXScale);
-                JHandsPlugin.Instance.BrepDisplay.SetObjects(gemBrep);
+                JHandsPlugin.Instance.BrepDisplay.SetObjects(new Brep[] { gemBrep });
                 RandomMessage(((int)sizeX));
 
                 height = PickPercentage("Depth of Gem", sizeX);
                 if (height < 0) { JHandsPlugin.Instance.BrepDisplay.Enabled = false; return Result.Failure; }
                 var heightScale = Rhino.Geometry.Transform.Scale(XY, 1, 1, height);
                 gemBrep.Transform(heightScale);
-                JHandsPlugin.Instance.BrepDisplay.SetObjects(gemBrep);
+                JHandsPlugin.Instance.BrepDisplay.SetObjects(new Brep[] { gemBrep });
                 RandomMessage(((int)height));
 
                 values = new double[] { sizeX, sizeY, height };

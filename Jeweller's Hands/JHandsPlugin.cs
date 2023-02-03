@@ -20,12 +20,11 @@ namespace JewellersHands
 
         //Public variables of C_Gemstones
         public bool PreviewGems = false;
+        public bool PreviewArray = true;
 
         //Public variables of C_GemstonesCount
         public bool BakeTextDot = false;
         public bool ChangeGemstonesColor = true;
-
-
 
         public JHandsPlugin()
         {
@@ -36,17 +35,20 @@ namespace JewellersHands
             Mensajitos = false;
 
             PreviewGems = false;
+            PreviewArray = true;
         }
 
         ///<summary>Gets the only instance of the GemstonePlugin plug-in.</summary>
         public static JHandsPlugin Instance { get; private set; }
 
-        private void RhinoObjectActivity(Brep gemBrep)
+        /*
+        private void RhinoObjectActivity(Brep[] gemBrep)
         {
             if (!BrepDisplay.Enabled) return;
 
             BrepDisplay.SetObjects(gemBrep);
         }
+        */
 
         // You can override methods here to change the plug-in behavior on
         // loading and shut down, add options pages to the Rhino _Option command
