@@ -96,8 +96,6 @@ namespace JewellersHands
             Curve[] curveIntersection = null;
             Point3d[] pointIntersection = null;
 
-            Point3d startPoint = newCurve.PointAtStart;
-            Point3d endPoint = newCurve.PointAtEnd;
             List<Point3d> arrayIntersections = new List<Point3d>();
             arrayIntersections.Add(startPoint);
             int iteration = 0;
@@ -435,7 +433,7 @@ namespace JewellersHands
         {
             base.OnSizeChanged(e);
             Invalidate();
-        }
+    }
 
         protected override void OnLoadComplete(System.EventArgs e)
         {
@@ -596,7 +594,8 @@ namespace JewellersHands
             {
                 return Result.Failure;
             }
-            
+
+
             args.Gem = brep;
             args.basePoint = basePoint;
             curve.Domain = new Interval(0, 1);
@@ -604,7 +603,7 @@ namespace JewellersHands
             args.DistanceX = 10;
             args.ScaleX = 1;
             args.CalculateOffsets();
-            
+
             JHandsPlugin.Instance.BrepDisplay.Enabled = true;
             JHandsPlugin.Instance.PreviewArray = true;
             Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
@@ -614,11 +613,11 @@ namespace JewellersHands
 
             var form = new CoffeeDialog(args);
             var rc = form.ShowModal(RhinoEtoApp.MainWindow);
-            
+
             JHandsPlugin.Instance.BrepDisplay.Enabled = false;
 
             if (rc == Result.Cancel)
-            {
+                {
                 return Result.Cancel;
             }
 
