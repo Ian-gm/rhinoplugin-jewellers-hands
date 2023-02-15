@@ -1,10 +1,12 @@
-﻿using Rhino.Display;
+﻿using Rhino;
+using Rhino.Display;
 using Rhino.DocObjects;
 using Rhino.Geometry;
 using Rhino.UI;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Security.Cryptography;
 
 namespace JewellersHands
 {
@@ -29,7 +31,7 @@ namespace JewellersHands
 
         protected override void PostDrawObjects(DrawEventArgs e)
         {
-            bool run;
+            bool run = false;
 
             Guid[] runningCommands = Rhino.Commands.Command.GetCommandStack();
             Guid runningCommand = runningCommands[runningCommands.Length-1];
@@ -60,8 +62,11 @@ namespace JewellersHands
                 {
                     foreach(Brep gem in gemBreps) 
                     {
-                        e.Display.DrawBrepShaded(gem, material);
-                        e.Display.DrawBrepWires(gem, System.Drawing.Color.Black);
+                        if (null != gem)
+                        {
+                            e.Display.DrawBrepShaded(gem, material);
+                            e.Display.DrawBrepWires(gem, System.Drawing.Color.Black);
+                        }   
                     }
                 }
             }

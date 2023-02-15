@@ -41,15 +41,6 @@ namespace JewellersHands
         ///<summary>Gets the only instance of the GemstonePlugin plug-in.</summary>
         public static JHandsPlugin Instance { get; private set; }
 
-        /*
-        private void RhinoObjectActivity(Brep[] gemBrep)
-        {
-            if (!BrepDisplay.Enabled) return;
-
-            BrepDisplay.SetObjects(gemBrep);
-        }
-        */
-
         // You can override methods here to change the plug-in behavior on
         // loading and shut down, add options pages to the Rhino _Option command
         // and maintain plug-in wide options in a document.

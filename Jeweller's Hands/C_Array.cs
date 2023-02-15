@@ -95,6 +95,8 @@ namespace JewellersHands
             Curve newCurve = Curve;
             Curve[] curveIntersection = null;
             Point3d[] pointIntersection = null;
+            Point3d startPoint = newCurve.PointAtStart;
+            Point3d endPoint = newCurve.PointAtEnd;
 
             List<Point3d> arrayIntersections = new List<Point3d>();
             arrayIntersections.Add(startPoint);
@@ -127,6 +129,11 @@ namespace JewellersHands
 
                 currentRadius = nextRadius;
                 nextRadius *= ScaleX;
+
+                if(nextRadius < 0.05)
+                {
+                    break;
+                }
 
                 startPoint = newCurve.PointAtStart;
                 endPoint = newCurve.PointAtEnd;
@@ -192,6 +199,7 @@ namespace JewellersHands
             MinValue = 0.01,
             MaxValue = 2,
             Value = 1,
+            Increment = 0.01
         };
         public Slider sliderDistance = new Slider 
         { 
@@ -205,6 +213,7 @@ namespace JewellersHands
             MinValue = 0,
             MaxValue = 20,
             Value = 10,
+            Increment = 0.1
         };
 
         public bool onStepper = false;
@@ -215,7 +224,7 @@ namespace JewellersHands
         {
             innerargs = args;
             
-            Title = "Array Gemstone";
+            Title = "Array Gemstones";
             Resizable = true;
 
             var previewCheckbox = new CheckBox { Text = "Preview", Checked = JHandsPlugin.Instance.PreviewArray };
@@ -310,7 +319,7 @@ namespace JewellersHands
             if (onStepper)
             {
                 float scaleValue = (float)stepperScale.Value;
-                sliderScale.Value = (int)scaleValue * 1000;
+                sliderScale.Value = (int)(scaleValue * 1000);
                 RhinoApp.WriteLine("Scale slider value changed to" + scaleValue.ToString());
                 OnValueChanged(scaleValue, 1);
             }
@@ -330,7 +339,7 @@ namespace JewellersHands
             if (onStepper)
             {
                 float distanceValue = (float)stepperDistance.Value;
-                sliderDistance.Value = (int)distanceValue * 100;
+                sliderDistance.Value = (int)(distanceValue * 100);
                 RhinoApp.WriteLine("Distance slider value changed to" + distanceValue.ToString());
                 OnValueChanged(distanceValue, 2);
             }  
