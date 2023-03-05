@@ -12,6 +12,7 @@ using Rhino.UI;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Reflection.Emit;
 using static Rhino.DocObjects.Font;
 using static System.Net.Mime.MediaTypeNames;
 
@@ -111,17 +112,41 @@ namespace JewellersHands
         public TextObjectForm()
         {
             Title = "Text Object";
+            Eto.Style.Add<FontPicker>("bigger-picker", Font => {
+                Font.Height = 50;
+            });
             Resizable = true;
             textObject = new TextEntity();
-            textarea1 = new RichTextArea() { /*Width = 100, Height = 50,*/ Text = "New Text"};
-            textObject.RichText = "New Text";
-            textarea1.Focus();
+            textarea1 = new RichTextArea() { Width = 250, Height = 150, Text = JHandsPlugin.Instance.WrittenText };
+
+            textObject.RichText = JHandsPlugin.Instance.WrittenText;
+            if(JHandsPlugin.Instance.PickedFont != null)
+            {
+                textObject.Font = new Rhino.DocObjects.Font(JHandsPlugin.Instance.PickedFont.FamilyName);
+                textarea1.Font = new Eto.Drawing.Font(JHandsPlugin.Instance.PickedFont.FamilyName, 15, Eto.Drawing.FontStyle.None, FontDecoration.None);
+            }
+            else
+            {
+                textarea1.Font = new Eto.Drawing.Font("Arial", 5, Eto.Drawing.FontStyle.None, FontDecoration.None);
+            }
+            textarea1.Focus(); 
 
             var sep1 = new TestSeparator { Text = "Text" };
             var sep2 = new TestSeparator { Text = "Font and Style" };
 
-            fontPicker = new FontPicker();
+            if(JHandsPlugin.Instance.PickedFont!= null)
+            {
+                fontPicker = new FontPicker(JHandsPlugin.Instance.PickedFont) { Style = "bigger-picker"};
+            }
+            else
+            {
+                fontPicker = new FontPicker() { Style = "bigger-picker" };
+            }
+            fontPicker.Width= 250;
             fontPicker.ValueChanged += FontPicker_ValueChanged;
+            fontPicker.GotFocus += FontPicker_GotFocus;
+            fontPicker.KeyDown += FontPicker_KeyDown;
+            
 
             DefaultButton = new Button { Text = "OK" };
             DefaultButton.Click += (sender, e) => { C_TextObject.Instance.finalTextObject = textObject; Close(Rhino.Commands.Result.Success); } ;
@@ -162,15 +187,27 @@ namespace JewellersHands
             textarea1.TextChanged += Textarea1_TextChanged;
         }
 
+        private void FontPicker_KeyDown(object sender, KeyEventArgs e)
+        {
+            RhinoApp.WriteLine(fontPicker.Value.FamilyName);
+        }
+
+        private void FontPicker_GotFocus(object sender, EventArgs e)
+        {
+            RhinoApp.WriteLine(fontPicker.Value.FamilyName);
+        }
+
         private void FontPicker_ValueChanged(object sender, EventArgs e)
         {
             textObject.Font = new Rhino.DocObjects.Font(fontPicker.Value.FamilyName);
+            JHandsPlugin.Instance.PickedFont = fontPicker.Value;
             textarea1.Font = fontPicker.Value;
         }
 
         private void Textarea1_TextChanged(object sender, EventArgs e)
         {
             textObject.RichText = textarea1.Text;
+            JHandsPlugin.Instance.WrittenText = textarea1.Text;
         }
     }
 

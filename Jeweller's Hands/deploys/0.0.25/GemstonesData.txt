@@ -1,0 +1,25 @@
+﻿NAME: TYPE, ABBREVIATION // Gemstone types: 1 Round, 2 Rectangle, 3 Tappered <- REFERENCE LINE, PLEASE DO NOT ERASE
+Ascher: 2, ASC
+Baguette: 2, BGT
+Bullet: 2, BLT
+Cabochon: 1, CB
+Cadillac: 2, CAD
+Cushion: 2, CSN
+CushionSharp: 2, pCSN
+CushionSoft: 2, sCSN
+Emerald: 2, EC
+HalfMoon: 2, HM
+Heart: 2, HS
+Kite: 2, KTE
+Lozange: 2, LZN
+Marquise: 2, MQ
+Oval: 2, OV
+Pear: 2, PS
+Pearl: 1, PRL
+Princess: 2, PR
+Radiant: 2, RD
+Round: 1, RND
+Shield: 2, SHLD
+TaperBaguette: 3, TP
+TrillionCurved: 2, TR
+TrillionStraight: 2, TRs

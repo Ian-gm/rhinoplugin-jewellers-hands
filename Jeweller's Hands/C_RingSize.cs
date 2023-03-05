@@ -67,26 +67,26 @@ namespace JewellersHands
                     //North American standard ISO to Diameter = (ISO * 0.8128) + 11.63. source: https://en.wikipedia.org/wiki/Ring_size
                     if (optionIndex == 1) //ISO
                     {
-                        ISOvalue = gp.Number();
-                        diameter = Math.Round((ISOvalue * 0.8128) + 11.63, 2);
+                        ISOvalue = Math.Round(gp.Number()*2,1) / 2;
+                        diameter = Math.Round(((ISOvalue * 0.8128) + 11.63) * 2, 1) / 2;
                         radius = diameter / 2;
                     
                         return new[] { ISOvalue, radius };
                     }
                     else if (optionIndex == 2) //diameter
                     {
-                        diameter = gp.Number();
+                        diameter = Math.Round(gp.Number(), 2);
                         radius = diameter / 2;
-                        ISOvalue = Math.Round((diameter - 11.63) / 0.8128, 2);
+                        ISOvalue = Math.Round(((diameter - 11.63) / 0.8128) * 2, 1) / 2;
 
                         return new[] { ISOvalue, radius };
                     }
                     else if (optionIndex == 3) //radius
                     {
-                        radius = gp.Number();
+                        radius = Math.Round(gp.Number(), 2);
                         diameter = radius * 2;
-                        ISOvalue = Math.Round((diameter - 11.63) / 0.8128, 2);
-
+                        ISOvalue = Math.Round(((diameter - 11.63) / 0.8128) * 2, 1) / 2;
+                        
                         return new[] { ISOvalue, radius };
                     }
                 }

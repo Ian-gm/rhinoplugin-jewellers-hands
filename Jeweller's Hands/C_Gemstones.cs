@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Runtime.Remoting.Metadata.W3cXsd2001;
 using System.Security.Cryptography;
 using System.Windows.Markup;
 
@@ -75,15 +76,16 @@ namespace JewellersHands
             string[] typeSeparator = { "\n" };
             string[] eachGemstone;
             string[] nameSeparator = { ":" };
-            string[] gemNameandData;
-            string[] dataSeparator = { "," };
-            string[] gemData;
+            string[] dataSeparator = { "," };           
             string gemName;
 
-            eachGemstone = dump.Split(typeSeparator, 100, StringSplitOptions.RemoveEmptyEntries);
+            eachGemstone = dump.Split(typeSeparator, StringSplitOptions.RemoveEmptyEntries);
 
-            for(int i = 1; i <= eachGemstone.Length-1; i++)
+            for (int i = 1; i <= eachGemstone.Length - 1; i++)
             {
+                string[] gemNameandData;
+                string[] gemData;
+
                 gemNameandData = eachGemstone[i].Split(nameSeparator, 2, StringSplitOptions.RemoveEmptyEntries);
                 gemName = gemNameandData[0].Trim();
                 gemData = gemNameandData[1].Split(dataSeparator, 2, StringSplitOptions.RemoveEmptyEntries);
@@ -140,7 +142,7 @@ namespace JewellersHands
                     }
                     else
                     {
-                        return gp.Number();
+                        return Math.Round(gp.Number(), 2);
                     }
                 }
             }
@@ -182,7 +184,7 @@ namespace JewellersHands
                     if(gp.Number() > 0)
                     {
                         RhinoApp.WriteLine("Default chosen = 65% of width");
-                        return gp.Number() * value * 0.01;
+                        return Math.Round(gp.Number() * value * 0.01, 2);
                     }
                 }
                 else if (get_rc == Rhino.Input.GetResult.Option) //State logic
@@ -196,7 +198,6 @@ namespace JewellersHands
                     {
                         gp.SetCommandPrompt("Pick a Number");
                         gp.ClearDefault();
-
                     }
                     else if(gp.OptionIndex() == 3) //Toggle
                     {
@@ -223,11 +224,11 @@ namespace JewellersHands
                 {
                     if (optionIndex == 1) //Percentage
                     {
-                        return gp.Number() * value * 0.01;
+                        return Math.Round(gp.Number() * value * 0.01, 2);
                     }
                     else if (optionIndex == 2) //Number
                     {
-                        return gp.Number();
+                        return Math.Round(gp.Number(), 2);
                     }
                 }
             }
@@ -255,6 +256,7 @@ namespace JewellersHands
             RhinoApp.WriteLine("Choose a Gem", EnglishName);
 
             Brep gemBrep = null;
+            Curve gemCurve = null;
             
             System.Drawing.Color gemColor = System.Drawing.Color.FromArgb(255,0,0);
 
@@ -269,15 +271,22 @@ namespace JewellersHands
             int findfilename;
             foreach (string file in gemFiles)
             {
-                findfilename = file.LastIndexOf("\\");
+                string extension = Path.GetExtension(file);
 
-                gemList.Add(file.Substring(findfilename + 1));
+                if (extension.Equals(".3dm"))
+                {
+                    findfilename = file.LastIndexOf("\\");
+
+                    gemList.Add(file.Substring(findfilename + 1));
+                }
             }
 
+
             int gemIndex = ChooseGemstone(gemList);
+
             if(gemIndex == -1)
             { 
-            return  Result.Cancel;
+                return  Result.Cancel;
             }
             string gemFileName = gemList[gemIndex - 1];
 
@@ -287,7 +296,7 @@ namespace JewellersHands
             }
 
             File3dm gemFile = File3dm.Read(strGemsPath + "\\" + gemFileName,
-                Rhino.FileIO.File3dm.TableTypeFilter.ObjectTable, Rhino.FileIO.File3dm.ObjectTypeFilter.Brep);
+                Rhino.FileIO.File3dm.TableTypeFilter.ObjectTable, Rhino.FileIO.File3dm.ObjectTypeFilter.Brep  & File3dm.ObjectTypeFilter.Curve);
 
             File3dmObjectTable gemObjects = gemFile.Objects;
 
@@ -297,18 +306,17 @@ namespace JewellersHands
                 {
                     gemBrep = Brep.TryConvertBrep(gemObject.Geometry);
                     gemColor = gemObject.Attributes.ObjectColor;
-
                 }
-                else
+                else if(gemObject.Geometry.ObjectType == ObjectType.Curve)
                 {
-                    RhinoApp.WriteLine("The Gem chose does not contain a Brep in it's .3dm file");
-                    return Result.Failure;
+                    RhinoApp.WriteLine("This Gem contains a curve");
+                    gemCurve = (Curve)gemObject.Geometry;
                 }
             }
 
             if (gemBrep == null)
             {
-                RhinoApp.Write("The Gem could not be loaded");
+                RhinoApp.Write("The Gem " + gemFileName + " could not be loaded");
                 return Result.Failure;
             }
 
@@ -322,7 +330,7 @@ namespace JewellersHands
 
             Tuple<int, string> gemData;
 
-            string gemName = gemFileName.Substring(0, gemFileName.Length - 4);
+            string gemName = Path.GetFileNameWithoutExtension(gemFileName);
 
             if(dict.TryGetValue(gemName, out gemData))
             {
@@ -352,6 +360,10 @@ namespace JewellersHands
                 if (diameter < 0) { JHandsPlugin.Instance.BrepDisplay.Enabled = false; return Result.Failure; }
                 var diameterScale = Rhino.Geometry.Transform.Scale(XY, diameter, diameter, 1);
                 gemBrep.Transform(diameterScale);
+                if(gemCurve != null)
+                {
+                    gemCurve.Transform(diameterScale);
+                }
                 JHandsPlugin.Instance.BrepDisplay.SetObjects(new Brep[] { gemBrep });
                 RandomMessage(((int)diameter));
 
@@ -359,6 +371,10 @@ namespace JewellersHands
                 if (height < 0) { JHandsPlugin.Instance.BrepDisplay.Enabled = false; return Result.Failure; }
                 var heightScale = Rhino.Geometry.Transform.Scale(XY, 1, 1, height);
                 gemBrep.Transform(heightScale);
+                if(gemCurve != null)
+                {
+                    gemCurve.Transform(heightScale);
+                }
                 JHandsPlugin.Instance.BrepDisplay.SetObjects(new Brep[] { gemBrep });
                 RandomMessage((int)height);
 
@@ -370,6 +386,10 @@ namespace JewellersHands
                 if (sizeY < 0) { JHandsPlugin.Instance.BrepDisplay.Enabled = false; return Result.Failure; }
                 var sizeYScale = Rhino.Geometry.Transform.Scale(XY, 1, sizeY, 1);
                 gemBrep.Transform(sizeYScale);
+                if(gemCurve != null)
+                {
+                    gemCurve.Transform(sizeYScale);
+                }
                 JHandsPlugin.Instance.BrepDisplay.SetObjects(new Brep[] { gemBrep });
                 RandomMessage(((int)sizeY));
 
@@ -377,6 +397,10 @@ namespace JewellersHands
                 if (sizeX < 0) { JHandsPlugin.Instance.BrepDisplay.Enabled = false; return Result.Failure; }
                 var sizeXScale = Rhino.Geometry.Transform.Scale(XY, sizeX, 1, 1);
                 gemBrep.Transform(sizeXScale);
+                if(gemCurve != null)
+                {
+                    gemCurve.Transform(sizeXScale);
+                }
                 JHandsPlugin.Instance.BrepDisplay.SetObjects(new Brep[] { gemBrep });
                 RandomMessage(((int)sizeX));
 
@@ -388,8 +412,20 @@ namespace JewellersHands
                 var rotateXZ = Rhino.Geometry.Transform.RotationZYX(0, Math.PI / 2,0);
                 var reverseRotateXZ = Rhino.Geometry.Transform.RotationZYX(0, -Math.PI / 2,0);
                 gemBrep.Transform(rotateXZ);
+                if(gemCurve != null)
+                {
+                    gemCurve.Transform(rotateXZ);
+                }
                 taperTransform.Morph(gemBrep);
+                if(gemCurve != null)
+                {
+                    taperTransform.Morph(gemCurve);
+                }
                 gemBrep.Transform(reverseRotateXZ);
+                if(gemCurve != null)
+                {
+                    gemCurve.Transform(reverseRotateXZ);
+                }
                 JHandsPlugin.Instance.BrepDisplay.SetObjects(new Brep[] { gemBrep });
                 RandomMessage(((int)sizeX2));
 
@@ -397,6 +433,10 @@ namespace JewellersHands
                 if (height < 0) { JHandsPlugin.Instance.BrepDisplay.Enabled = false; return Result.Failure; }
                 var heightScale = Rhino.Geometry.Transform.Scale(XY, 1, 1, height);
                 gemBrep.Transform(heightScale);
+                if(gemCurve != null)
+                {
+                    gemCurve.Transform(heightScale);
+                }
                 JHandsPlugin.Instance.BrepDisplay.SetObjects(new Brep[] { gemBrep });
                 RandomMessage(((int)height));
 
@@ -409,6 +449,10 @@ namespace JewellersHands
                 if (sizeY < 0) { JHandsPlugin.Instance.BrepDisplay.Enabled = false; return Result.Failure; }
                 var sizeYScale = Rhino.Geometry.Transform.Scale(XY, 1, sizeY, 1);
                 gemBrep.Transform(sizeYScale);
+                if(gemCurve != null)
+                {
+                    gemCurve.Transform(sizeYScale);
+                }
                 JHandsPlugin.Instance.BrepDisplay.SetObjects(new Brep[] { gemBrep });
                 RandomMessage(((int)sizeY));
 
@@ -416,6 +460,10 @@ namespace JewellersHands
                 if (sizeX < 0) { JHandsPlugin.Instance.BrepDisplay.Enabled = false; return Result.Failure; }
                 var sizeXScale = Rhino.Geometry.Transform.Scale(XY, sizeX, 1, 1);
                 gemBrep.Transform(sizeXScale);
+                if (gemCurve != null)
+                {
+                    gemCurve.Transform(sizeXScale);
+                }
                 JHandsPlugin.Instance.BrepDisplay.SetObjects(new Brep[] { gemBrep });
                 RandomMessage(((int)sizeX));
 
@@ -423,6 +471,10 @@ namespace JewellersHands
                 if (height < 0) { JHandsPlugin.Instance.BrepDisplay.Enabled = false; return Result.Failure; }
                 var heightScale = Rhino.Geometry.Transform.Scale(XY, 1, 1, height);
                 gemBrep.Transform(heightScale);
+                if (gemCurve != null)
+                {
+                    gemCurve.Transform(heightScale);
+                }
                 JHandsPlugin.Instance.BrepDisplay.SetObjects(new Brep[] { gemBrep });
                 RandomMessage(((int)height));
 
@@ -446,7 +498,6 @@ namespace JewellersHands
 
                 gemsLayer = doc.Layers.FindName("Gems");
                 gemsLayerIndex = gemsLayer.Index;
-
 
                 //Create specific Gem sub-layer
                 string[] gemAbbreviation = {"ASC", "BGT", "BLT", "CB", "CAD", "sCSN", "pCSN",
@@ -484,7 +535,26 @@ namespace JewellersHands
                 ObjectAttributes gemAtt = new ObjectAttributes();
                 gemAtt.Name = "Gem";
                 gemAtt.LayerIndex = gemLayerIndex;
-                doc.Objects.AddBrep(gemBrep, gemAtt);
+                Guid bakedBrep = doc.Objects.AddBrep(gemBrep, gemAtt);
+
+                if(gemCurve != null)
+                {
+                    ObjectAttributes crvAtt = new ObjectAttributes();
+                    crvAtt.Name = "Curve";
+                    crvAtt.LayerIndex = gemLayerIndex;
+                    Guid bakedCurve = doc.Objects.AddCurve(gemCurve, crvAtt);
+
+                    int groupIndex = doc.Groups.Add();
+
+                    doc.Groups.AddToGroup(groupIndex, bakedBrep);
+                    doc.Groups.AddToGroup(groupIndex, bakedCurve);
+                }
+
+                if (bakedBrep == null)
+                {
+                    RhinoApp.WriteLine("Couldn't bake brep", EnglishName);
+                    return Result.Cancel;
+                }
             }
             doc.Views.Redraw();
             RhinoApp.WriteLine("Baked a brep", EnglishName);

@@ -8,7 +8,7 @@ namespace JewellersHands
     {
         public C_Mensajitos()
         {
-            Instance = this;
+            //Instance = this;
         }
 
         ///<summary>The only instance of the MyCommand command.</summary>

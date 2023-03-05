@@ -1,6 +1,7 @@
 ﻿using Rhino;
 using Rhino.Geometry;
 using System;
+using Eto;
 
 namespace JewellersHands
 {
@@ -13,7 +14,7 @@ namespace JewellersHands
     /// "Show All Files" to see it in the "Solution Explorer" window).</para>
     ///</summary>
     public class JHandsPlugin : Rhino.PlugIns.PlugIn
-    {  
+    {
         public D_BrepDisplayConduit BrepDisplay { get; private set; }
 
         public bool Mensajitos;
@@ -21,11 +22,26 @@ namespace JewellersHands
         //Public variables of C_Gemstones
         public bool PreviewGems = false;
         public bool PreviewArray = true;
+        public bool PreviewMirror = false;
 
         //Public variables of C_GemstonesCount
         public bool BakeTextDot = false;
         public bool ChangeGemstonesColor = true;
+        public bool RevertChanges = true;
+        public bool TakeViewCapture = false;
 
+        //Public variables of C_Weight
+        public bool onlySolids = false;
+
+        //Public variables of C_Mirror
+        public int Xmirror = 0;
+        public int Ymirror = 0;
+        public int MirrorPlane = 0;
+        public bool joinSelected = true;
+        public bool deleteSelected = true;
+
+        public Eto.Drawing.Font PickedFont = null;
+        public string WrittenText = "";
         public JHandsPlugin()
         {
             Instance = this;

@@ -13,6 +13,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="C_EtoSample.cs" />
+    <Compile Remove="C_Mensajitos.cs" />
+    <Compile Remove="C_MirrorTrim.cs" />
     <Compile Remove="GemstoneCommand_simplified.cs" />
   </ItemGroup>
   
