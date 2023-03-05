@@ -113,14 +113,26 @@ namespace JewellersHands
             Title = "Text Object";
             Resizable = true;
             textObject = new TextEntity();
-            textarea1 = new RichTextArea() { /*Width = 100, Height = 50,*/ Text = "New Text"};
+            textarea1 = new RichTextArea() { Width = 250, Text = "New Text"};
             textObject.RichText = "New Text";
+            if(JHandsPlugin.Instance.PickedFont != null)
+            {
+                textObject.Font = new Rhino.DocObjects.Font(JHandsPlugin.Instance.PickedFont.FamilyName);
+            }
             textarea1.Focus();
 
             var sep1 = new TestSeparator { Text = "Text" };
             var sep2 = new TestSeparator { Text = "Font and Style" };
 
-            fontPicker = new FontPicker();
+            if(JHandsPlugin.Instance.PickedFont!= null)
+            {
+                fontPicker = new FontPicker(JHandsPlugin.Instance.PickedFont);
+            }
+            else
+            {
+                fontPicker = new FontPicker();
+            }
+            
             fontPicker.ValueChanged += FontPicker_ValueChanged;
 
             DefaultButton = new Button { Text = "OK" };
@@ -165,6 +177,7 @@ namespace JewellersHands
         private void FontPicker_ValueChanged(object sender, EventArgs e)
         {
             textObject.Font = new Rhino.DocObjects.Font(fontPicker.Value.FamilyName);
+            JHandsPlugin.Instance.PickedFont = fontPicker.Value;
             textarea1.Font = fontPicker.Value;
         }
 

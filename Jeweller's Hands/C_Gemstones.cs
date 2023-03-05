@@ -140,7 +140,7 @@ namespace JewellersHands
                     }
                     else
                     {
-                        return gp.Number();
+                        return Math.Round(gp.Number(), 2);
                     }
                 }
             }
@@ -182,7 +182,7 @@ namespace JewellersHands
                     if(gp.Number() > 0)
                     {
                         RhinoApp.WriteLine("Default chosen = 65% of width");
-                        return gp.Number() * value * 0.01;
+                        return Math.Round(gp.Number() * value * 0.01, 2);
                     }
                 }
                 else if (get_rc == Rhino.Input.GetResult.Option) //State logic
@@ -196,7 +196,6 @@ namespace JewellersHands
                     {
                         gp.SetCommandPrompt("Pick a Number");
                         gp.ClearDefault();
-
                     }
                     else if(gp.OptionIndex() == 3) //Toggle
                     {
@@ -223,11 +222,11 @@ namespace JewellersHands
                 {
                     if (optionIndex == 1) //Percentage
                     {
-                        return gp.Number() * value * 0.01;
+                        return Math.Round(gp.Number() * value * 0.01, 2);
                     }
                     else if (optionIndex == 2) //Number
                     {
-                        return gp.Number();
+                        return Math.Round(gp.Number(), 2);
                     }
                 }
             }

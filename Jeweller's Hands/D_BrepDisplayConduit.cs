@@ -14,6 +14,7 @@ namespace JewellersHands
     {
         public static D_BrepDisplayConduit Instance { get; private set; }
         Brep[] gemBreps { get; set; }
+        Curve[] curvePreviews { get; set; }
 
         public D_BrepDisplayConduit()
         {
@@ -26,7 +27,15 @@ namespace JewellersHands
         public void SetObjects(Brep[] newGemBreps)
         {
             gemBreps = newGemBreps;
-            Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
+            RhinoDoc.ActiveDoc.Views.Redraw();
+
+            curvePreviews = null;
+        }
+
+        public void SetCurves(Curve[] newCurves)
+        {
+            curvePreviews = newCurves;
+            RhinoDoc.ActiveDoc.Views.Redraw();
         }
 
         protected override void PostDrawObjects(DrawEventArgs e)
@@ -43,6 +52,10 @@ namespace JewellersHands
             else if (runningCommand == C_Array.Instance.Id)
             { 
                 run = JHandsPlugin.Instance.PreviewArray;
+            }
+            else if (runningCommand == C_MirrorTrim.Instance.Id)
+            {
+                run = JHandsPlugin.Instance.PreviewMirror;
             }
             else
             {
@@ -67,6 +80,17 @@ namespace JewellersHands
                             e.Display.DrawBrepShaded(gem, material);
                             e.Display.DrawBrepWires(gem, System.Drawing.Color.Black);
                         }   
+                    }
+                }
+                
+                if (null != curvePreviews)
+                {
+                    foreach (Curve curve in curvePreviews)
+                    {
+                        if (null != curve)
+                        {
+                            e.Display.DrawCurve(curve, System.Drawing.Color.Red);
+                        }
                     }
                 }
             }
