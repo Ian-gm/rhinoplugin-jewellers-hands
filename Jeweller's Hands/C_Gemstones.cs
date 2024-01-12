@@ -2,14 +2,17 @@
 using Rhino.Commands;
 using Rhino.Display;
 using Rhino.DocObjects;
+using Rhino.DocObjects.Tables;
 using Rhino.FileIO;
 using Rhino.Geometry;
+using Rhino.Input.Custom;
 using System;
 using System.CodeDom;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Runtime.Remoting;
 using System.Runtime.Remoting.Metadata.W3cXsd2001;
 using System.Security.Cryptography;
 using System.Windows.Markup;
@@ -19,6 +22,10 @@ namespace JewellersHands
 {
     public class C_Gemstones : Rhino.Commands.Command
     {
+
+        private const int HISTORY_VERSION = 20131107;
+
+
         public C_Gemstones()
         {
             // Rhino only creates one instance of each command class defined in a
@@ -300,7 +307,10 @@ namespace JewellersHands
 
             File3dmObjectTable gemObjects = gemFile.Objects;
 
-            foreach(File3dmObject gemObject in gemObjects)
+            Curve gemRail = null;
+            Curve gemProfile = null;
+
+            foreach (File3dmObject gemObject in gemObjects)
             { 
                 if(gemObject.Geometry.HasBrepForm)
                 {
@@ -309,8 +319,20 @@ namespace JewellersHands
                 }
                 else if(gemObject.Geometry.ObjectType == ObjectType.Curve)
                 {
-                    RhinoApp.WriteLine("This Gem contains a curve");
-                    gemCurve = (Curve)gemObject.Geometry;
+
+                    if (gemObject.Name == "Profile")
+                    {
+                        gemProfile = (Curve)gemObject.Geometry;
+                    }
+                    else if (gemObject.Name == "Rail")
+                    {
+                        Curve gemR = (Curve)gemObject.Geometry;
+                        gemRail = gemR.ToNurbsCurve();
+                    }
+                    else
+                    {
+                        gemCurve = (Curve)gemObject.Geometry;
+                    }
                 }
             }
 
@@ -364,6 +386,14 @@ namespace JewellersHands
                 {
                     gemCurve.Transform(diameterScale);
                 }
+                if(gemProfile != null)
+                {
+                    gemProfile.Transform(diameterScale);
+                }
+                if(gemRail != null)
+                {
+                    gemRail.Transform(diameterScale);
+                }
                 JHandsPlugin.Instance.BrepDisplay.SetObjects(new Brep[] { gemBrep });
                 RandomMessage(((int)diameter));
 
@@ -374,6 +404,14 @@ namespace JewellersHands
                 if(gemCurve != null)
                 {
                     gemCurve.Transform(heightScale);
+                }
+                if (gemProfile != null)
+                {
+                    gemProfile.Transform(heightScale);
+                }
+                if (gemRail != null)
+                {
+                    gemRail.Transform(heightScale);
                 }
                 JHandsPlugin.Instance.BrepDisplay.SetObjects(new Brep[] { gemBrep });
                 RandomMessage((int)height);
@@ -453,6 +491,14 @@ namespace JewellersHands
                 {
                     gemCurve.Transform(sizeYScale);
                 }
+                if(gemProfile!= null)
+                {
+                    gemProfile.Transform(sizeYScale);
+                }
+                if(gemRail!=null)
+                {
+                    gemRail.Transform(sizeYScale);
+                }
                 JHandsPlugin.Instance.BrepDisplay.SetObjects(new Brep[] { gemBrep });
                 RandomMessage(((int)sizeY));
 
@@ -464,6 +510,14 @@ namespace JewellersHands
                 {
                     gemCurve.Transform(sizeXScale);
                 }
+                if (gemProfile != null)
+                {
+                    gemProfile.Transform(sizeXScale);
+                }
+                if (gemRail != null)
+                {
+                    gemRail.Transform(sizeXScale);
+                }
                 JHandsPlugin.Instance.BrepDisplay.SetObjects(new Brep[] { gemBrep });
                 RandomMessage(((int)sizeX));
 
@@ -474,6 +528,14 @@ namespace JewellersHands
                 if (gemCurve != null)
                 {
                     gemCurve.Transform(heightScale);
+                }
+                if (gemProfile != null)
+                {
+                    gemProfile.Transform(heightScale);
+                }
+                if (gemRail != null)
+                {
+                    gemRail.Transform(heightScale);
                 }
                 JHandsPlugin.Instance.BrepDisplay.SetObjects(new Brep[] { gemBrep });
                 RandomMessage(((int)height));
@@ -535,7 +597,54 @@ namespace JewellersHands
                 ObjectAttributes gemAtt = new ObjectAttributes();
                 gemAtt.Name = "Gem";
                 gemAtt.LayerIndex = gemLayerIndex;
-                Guid bakedBrep = doc.Objects.AddBrep(gemBrep, gemAtt);
+
+                Guid bakedBrep;
+                Guid bakedProfile;
+                Guid bakedRail;
+
+                if (gemName == "Cabochon")
+                {
+                    //PROFILE
+                    bakedProfile = doc.Objects.Add(gemProfile);
+                    doc.Objects.Select(bakedProfile);
+
+                    Rhino.DocObjects.ObjRef profileObjref;
+
+                    const Rhino.DocObjects.ObjectType filter = Rhino.DocObjects.ObjectType.Curve;
+                    Result rp = Rhino.Input.RhinoGet.GetOneObject("select a curve", false, filter, out profileObjref);
+
+                    Rhino.Geometry.Curve profileCurve = profileObjref.Curve();
+
+                    doc.Objects.UnselectAll();
+
+                    //RAIL
+                    bakedRail = doc.Objects.Add(gemRail);
+                    doc.Objects.Select(bakedRail);
+
+                    Rhino.DocObjects.ObjRef railObjref;
+
+                    Result rr = Rhino.Input.RhinoGet.GetOneObject("select a curve", false, filter, out railObjref);
+
+                    Rhino.Geometry.Curve railCurve = railObjref.Curve();
+
+                    NurbsSurface revolveSurface = NurbsSurface.CreateRailRevolvedSurface(profileCurve, railCurve, new Line(profileCurve.PointAtStart, profileCurve.PointAtEnd), true);
+                    //Surface newExtrude = Surface.CreateExtrusion(curve, new Vector3d(0, 0, 1));
+
+                    // Create a history record
+                    Rhino.DocObjects.HistoryRecord history = new Rhino.DocObjects.HistoryRecord(this, HISTORY_VERSION);
+                    WriteHistory(history, profileObjref, railObjref);
+
+                    bakedBrep = doc.Objects.AddBrep(revolveSurface.ToBrep(), gemAtt, history, false);
+
+                    int groupIndex = doc.Groups.Add();
+                    doc.Groups.AddToGroup(groupIndex, bakedBrep);
+                    doc.Groups.AddToGroup(groupIndex, bakedProfile);
+                    doc.Groups.AddToGroup(groupIndex, bakedRail);
+                }
+                else
+                {
+                    bakedBrep = doc.Objects.AddBrep(gemBrep, gemAtt);
+                }
 
                 if(gemCurve != null)
                 {
@@ -561,6 +670,58 @@ namespace JewellersHands
 
             // ---
             return Result.Success;
+        }
+
+
+        //HISTORY FUNCTIONS
+        protected override bool ReplayHistory(Rhino.DocObjects.ReplayHistoryData replay)
+        {
+            Rhino.DocObjects.ObjRef profileObjref = null;
+
+            Rhino.DocObjects.ObjRef railObjref = null;
+
+            if (!ReadHistory(replay, ref profileObjref, ref railObjref))
+                return false;
+
+            Rhino.Geometry.Curve profileCurve = profileObjref.Curve();
+            if (null == profileCurve)
+                return false;
+
+            Rhino.Geometry.Curve railCurve = railObjref.Curve();
+            if (null == railCurve)
+                return false;
+
+            NurbsSurface revolveSurface = NurbsSurface.CreateRailRevolvedSurface(profileCurve, railCurve, new Line(profileCurve.PointAtStart, profileCurve.PointAtEnd), true);
+
+            replay.Results[0].UpdateToBrep(revolveSurface.ToBrep(), null);
+
+            return true;
+        }
+
+        private bool ReadHistory(Rhino.DocObjects.ReplayHistoryData replay, ref Rhino.DocObjects.ObjRef profileObjref, ref Rhino.DocObjects.ObjRef railObjref)
+        {
+            if (HISTORY_VERSION != replay.HistoryVersion)
+                return false;
+
+            profileObjref = replay.GetRhinoObjRef(0);
+            if (null == profileObjref)
+                return false;
+
+            railObjref = replay.GetRhinoObjRef(1);
+            if (null == railObjref)
+                return false;
+
+            return true;
+        }
+
+        private bool WriteHistory(Rhino.DocObjects.HistoryRecord history, Rhino.DocObjects.ObjRef profileObjref, Rhino.DocObjects.ObjRef railObjref)
+        {
+            if (!history.SetObjRef(0, profileObjref))
+                return false;
+            if (!history.SetObjRef(1, railObjref))
+                return false;
+
+            return true;
         }
     }
 }

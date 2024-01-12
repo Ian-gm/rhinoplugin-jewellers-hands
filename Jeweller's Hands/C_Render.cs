@@ -181,8 +181,7 @@ namespace JewellersHands
                     else if(gp.OptionIndex() == 2) //COLOR
                     {
                         System.Drawing.Color cP = opt.CurrentValue;
-                        Color4f color = Color4f.FromArgb(cP.A, cP.R, cP.G, cP.B);
-                        setGemMaterial(doc, allGemsId, color);
+                        setGemMaterial(doc, allGemsId, cP);
                     }
                 }
                 else if (gp.CommandResult() == Rhino.Commands.Result.Success)
@@ -261,12 +260,97 @@ namespace JewellersHands
             }
         }
 
-        private void setGemMaterial(RhinoDoc doc, List<Guid> allGemsId, Color4f gemColor)
+        private void setGemMaterial(RhinoDoc doc, List<Guid> allGemsId, System.Drawing.Color cP)
         {
             //System.Drawing.Color colorSystem = System.Drawing.Color.FromArgb();
 
+            /*
             int matindex = doc.Materials.Find("GemMaterial", true);
 
+            if (matindex > 0)
+            {
+                var delmat = doc.Materials.FindIndex(matindex);
+                doc.RenderMaterials.Remove(delmat.RenderMaterial);
+            }
+
+            var mat = new Rhino.DocObjects.Material
+            {
+                Name = "GemMaterial",
+                DiffuseColor = gemColor.AsSystemColor(),
+                SpecularColor = System.Drawing.Color.White
+            };
+            /*
+            mat.ToPhysicallyBased();
+            mat.PhysicallyBased.BaseColor = gemColor;
+            mat.PhysicallyBased.Roughness = 0;
+
+            //mat.PhysicallyBased.Opacity = 0.5; //tira una espuma blanca no entiendoooo
+            mat.PhysicallyBased.Specular = 1;
+
+            mat.PhysicallyBased.OpacityRoughness = 0;
+            mat.PhysicallyBased.OpacityIOR = 0; //
+            mat.PhysicallyBased.ReflectiveIOR = 2;
+            */
+            //mat.CommitChanges();
+
+            /*
+            RenderMaterial matrenderobj = RenderMaterial.CreateBasicMaterial(mat, doc);
+            doc.RenderMaterials.Add(matrenderobj);
+
+            */
+
+            int matindex = doc.Materials.Find("GemMaterial", true);
+
+            var mat = new Rhino.DocObjects.Material();
+            RenderMaterial matobj;
+
+            if(matindex > 0)
+            {
+                //doc.Materials.DeleteAt(matindex);
+                doc.RenderMaterials.Remove(doc.Materials.FindIndex(matindex).RenderMaterial);
+            }
+
+            mat = new Rhino.DocObjects.Material
+            {
+                Name = "GemMaterial",
+                DiffuseColor = cP,
+                SpecularColor = System.Drawing.Color.White
+                    
+            };
+
+            mat.ToPhysicallyBased();
+
+            Color4f gemColor = Color4f.FromArgb(cP.A, cP.R, cP.G, cP.B);
+            mat.PhysicallyBased.BaseColor = gemColor;
+            mat.PhysicallyBased.Roughness = 0;
+            mat.PhysicallyBased.Specular = 1;
+            mat.PhysicallyBased.OpacityRoughness = 0;
+            mat.PhysicallyBased.OpacityIOR = 0; //
+            mat.PhysicallyBased.ReflectiveIOR = 2;
+            mat.CommitChanges();
+
+            matindex = doc.Materials.Add(mat, false);
+
+            /*matobj = mat.RenderMaterial;
+            matobj = RenderMaterial.CreateBasicMaterial(mat, doc);
+            doc.RenderMaterials.Add(matobj);
+            matindex = doc.Materials.Find("GemMaterial", true);
+            */
+           
+
+
+
+            foreach (Guid id in allGemsId)
+            {
+                var obj = doc.Objects.FindId(id);
+                obj.Attributes.MaterialSource = ObjectMaterialSource.MaterialFromObject;
+                obj.Attributes.MaterialIndex = matindex;
+                //obj.Attributes.RenderMaterial = mat.RenderMaterial;
+                
+                obj.CommitChanges();
+            }
+
+            /*
             if(matindex < 0)
             {
                 var mat = new Rhino.DocObjects.Material();
@@ -287,14 +371,6 @@ namespace JewellersHands
 
                 //mat.PhysicallyBased.Alpha = 0;
 
-                //
-
-                /*
-                mat.PhysicallyBased.SubsurfaceScatteringColor = gemColor;
-                mat.PhysicallyBased.Subsurface = 0.5;
-                mat.PhysicallyBased.SubsurfaceScatteringRadius = 0.5;
-                */
-
                 mat.CommitChanges();
 
                 matindex = doc.Materials.Add(mat);
@@ -308,13 +384,14 @@ namespace JewellersHands
                 mat.CommitChanges();
             } 
 
-            foreach (Guid id in allGemsId)
+                        foreach (Guid id in allGemsId)
             {
                 var obj = doc.Objects.FindId(id);
                 obj.Attributes.MaterialIndex = matindex;
                 obj.Attributes.MaterialSource = ObjectMaterialSource.MaterialFromObject;
                 obj.CommitChanges();
             }
+            */
 
             doc.Views.Redraw();
         }
