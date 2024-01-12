@@ -183,7 +183,7 @@ namespace JewellersHands
             string[] valuesType = new string[] { "Platinum", "24K", "22K", "20K", "18K", "14K", "10K", "Silver", "Palladium" };
             double[] valuesCoeficients = new double[] { 0.0207, 0.01932, 0.0178, 0.01642, 0.0152, 0.0134, 0.0119, 0.01036, 0.01202 };
 
-            go.SetCommandPrompt("Select objects to group");
+            go.SetCommandPrompt("Select objects to calculate weight");
             go.AcceptUndo(true);
             go.EnablePreSelect(true, true);
             go.EnableSelPrevious(true);
@@ -196,7 +196,13 @@ namespace JewellersHands
                 var DToggle = go.AddOptionToggle("OnlySolids", ref onlySolids);
                 var go_result = go.GetMultiple(1, 0);
                 var option = go.Option();
-                if (null != option)
+
+                if (go_result == Rhino.Input.GetResult.Cancel)
+                {
+                    RhinoApp.WriteLine("Exit");
+                    return null;
+                }
+                else if (null != option)
                 {
                     if (option.Index == DToggle)
                     {
@@ -352,16 +358,28 @@ namespace JewellersHands
                 doc.Objects.Hide(obj, false);
             }
 
-            ObjectAttributes att = new ObjectAttributes();
-            var mat = new Rhino.DocObjects.Material
+            int matindex = doc.Materials.Find("WeightMaterial", true);
+
+            var mat = new Rhino.DocObjects.Material();
+            RenderMaterial matobj;
+
+            if (matindex < 0)
             {
-                Name = "Grey",
-                DiffuseColor = System.Drawing.Color.Gray,
-                SpecularColor = System.Drawing.Color.White
-            };
-            var matobj = RenderMaterial.CreateBasicMaterial(mat, doc);
-            doc.RenderMaterials.Add(matobj);
-            att.RenderMaterial = matobj;
+                mat = new Rhino.DocObjects.Material
+                {
+                    Name = "WeightMaterial",
+                    DiffuseColor = System.Drawing.Color.FromArgb(190, 190, 190),
+                    SpecularColor = System.Drawing.Color.White
+                };
+                matobj = RenderMaterial.CreateBasicMaterial(mat, doc);
+                doc.RenderMaterials.Add(matobj);
+            }
+            else
+            {
+                mat = doc.Materials.FindIndex(matindex);
+                matobj = mat.RenderMaterial;
+            }
+
 
             List<ObjectAttributes> oldAtt = new List<ObjectAttributes>();
 
@@ -370,7 +388,7 @@ namespace JewellersHands
                 var obj = doc.Objects.FindId(id);
                 ObjectAttributes olda = obj.Attributes.Duplicate();
                 oldAtt.Add(olda);
-                doc.Objects.ModifyAttributes(id, att, true);
+                obj.Attributes.RenderMaterial = matobj;
                 obj.CommitChanges();
             }
 
@@ -409,6 +427,8 @@ namespace JewellersHands
                     
                     attIndex++;
                 }
+
+                doc.RenderMaterials.Remove(matobj);
             }
 
             //BORRAR LISTA DE CASOS Y COLORES
