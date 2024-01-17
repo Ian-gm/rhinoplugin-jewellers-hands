@@ -151,10 +151,8 @@ namespace JewellersHands
                     }
                     e.Display.Draw2dText(casePiece, caseColor, pt, false, caseTextSize); //System.Drawing.FontFamily.GenericMonospace.Name
                 }
-
                 index++;
             }
-
         }
 
         protected override void PostDrawObjects(DrawEventArgs e)

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -13,6 +15,7 @@ using Rhino.Commands;
 using Rhino.Display;
 using Rhino.DocObjects;
 using Rhino.DocObjects.Tables;
+using Rhino.FileIO;
 using Rhino.Geometry;
 using Rhino.Input.Custom;
 using Rhino.Render;
@@ -33,8 +36,80 @@ namespace JewellersHands
 
         public override string EnglishName => "JH_Render";
 
+        private int ChooseMaterial(List<string> gemList)
+        {
+            //Choose Gemstone
+            int tableIndex;
+            // For this example we will use a GetPoint class, but all of the custom
+            // "Get" classes support command line options.
+            Rhino.Input.Custom.GetOption gp = new Rhino.Input.Custom.GetOption();
+            gp.SetCommandPrompt("Choose a material");
+
+            // set up the options
+            // for (int i = 0; i <= (gemNames.Length-1); i++)
+            gemList.ForEach(delegate (string matName)
+            {
+                gp.AddOption(matName);
+            });
+
+
+            while (true)
+            {
+                // perform the get operation. This will prompt the user to input a point, but also
+                // allow for command line options defined above
+                Rhino.Input.GetResult get_rc = gp.Get();
+
+                if (get_rc == Rhino.Input.GetResult.Cancel)
+                {
+                    RhinoApp.WriteLine("Exit");
+                    break;
+                }
+                else if (gp.CommandResult() == Rhino.Commands.Result.Success)
+                {
+                    tableIndex = gp.OptionIndex();
+                    return tableIndex;
+                }
+                break;
+            }
+            return -1;
+        }
+
         protected override Result RunCommand(RhinoDoc doc, RunMode mode)
         {
+
+            //READ MATERIALS
+            string strExeFilePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+            string strWorkPath = System.IO.Path.GetDirectoryName(strExeFilePath);
+            string strGemsPath = strWorkPath + "\\Materials";
+
+            string[] matFiles = Directory.GetFiles(strGemsPath, "*.rmtl");
+            List<string> matList = new List<string>();
+
+            foreach (string file in matFiles)
+            {
+                matList.Add(Path.GetFileNameWithoutExtension(file));
+            }
+
+            int tableIndex = ChooseMaterial(matList);
+
+            string matFile = matFiles[tableIndex];
+            string matName = Path.GetFileNameWithoutExtension(matFile);
+            string rhinoCommand = String.Format("-_Materials \n _Options \n _LoadFromFile \n \"{0}\" \n _Enter \n _Enter", matFile);
+
+            RhinoApp.RunScript(rhinoCommand, false);
+
+            RenderMaterialTable matRT = doc.RenderMaterials;
+
+            int matIndex = 0;
+
+            for (int i = 0; i < matRT.Count; i++)
+            {
+                if(matRT[i].Name == matName)
+                {
+                    matIndex = i;
+                }
+            }
+
             //READ ALL GEMS
             List<Guid> allGemsId = new List<Guid>();
 
@@ -99,23 +174,26 @@ namespace JewellersHands
             {
                 doc.Objects.Hide(obj, false);
             }
-
-            //CHANGE GEMS COLOURS
+            
+            //GET GEMS ORIGINAL ATT
             List<ObjectAttributes> oldAtt = new List<ObjectAttributes>();
             foreach (Guid id in allGemsId)
             {
                 var obj = doc.Objects.FindId(id);
                 ObjectAttributes olda = obj.Attributes.Duplicate();
                 oldAtt.Add(olda);
+                
             }
 
-            //setGemMaterial(doc, allGemsId, new Color4f(1, 0, 0, 0));
+            foreach (Guid id in allGemsId)
+            {
+                var obj = doc.Objects.FindId(id);
+                obj.Attributes.RenderMaterial = doc.RenderMaterials[matIndex];
+                obj.CommitChanges();
+            }
 
-            //setGemMaterial(doc, allGemsId, new Color4f(0, 1, 0, 0));
+            RenderOptions("options", doc, null);
 
-            RenderOptions("Render Options", doc, allGemsId);
-
-            
             //VIEWPORT REVERT
             displayMode.DisplayAttributes.FillMode = DisplayPipelineAttributes.FrameBufferFillMode.DefaultColor;
             DisplayModeDescription.UpdateDisplayMode(displayMode);
@@ -145,7 +223,7 @@ namespace JewellersHands
 
                 attIndex++;
             }
-            
+
             return Result.Success;
         }
 

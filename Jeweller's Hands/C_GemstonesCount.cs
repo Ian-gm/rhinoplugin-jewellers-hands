@@ -215,10 +215,22 @@ namespace JewellersHands
 
         private void newViewCapture(RhinoView view, string path)
         {
+            float textSize = JHandsPlugin.Instance.BrepDisplay.caseTextSize;
+            float coef1 = ((float)480 / (float)view.ActiveViewport.Size.Height);
+            float coef2 = ((float)640 / (float)view.ActiveViewport.Size.Width);
+            float coef = coef1;
+            if (coef1 < coef2)
+            {
+                coef = coef2;
+            }
+            float calculation = (float)textSize * coef;
+            int newTextSize = (int)calculation;
+            JHandsPlugin.Instance.BrepDisplay.SetTextSize((int)newTextSize);
+
             var view_capture = new ViewCapture
             {
-                Width = view.ActiveViewport.Size.Width,
-                Height = view.ActiveViewport.Size.Height,
+                Width = 640,
+                Height = 480,
                 ScaleScreenItems = false,
                 DrawAxes = false,
                 DrawGrid = false,
@@ -277,6 +289,9 @@ namespace JewellersHands
                 string finalPath = Path.Combine(docpath, filename);
                 bitmap.Save(finalPath, System.Drawing.Imaging.ImageFormat.Jpeg);
             }
+
+
+            JHandsPlugin.Instance.BrepDisplay.SetTextSize((int)textSize);
         }
 
         protected override Result RunCommand(RhinoDoc doc, RunMode mode)
@@ -454,6 +469,12 @@ namespace JewellersHands
                 int layindex = obj.Attributes.LayerIndex;
                 Layer foundlayer = doc.Layers.FindIndex(layindex);
                 Guid parentid = foundlayer.ParentLayerId;
+
+                if(obj.Name == "Gem")
+                {
+                    add = false;
+                }
+                /*
                 if(parentid != null)
                 {
                     Layer parentfoundlayer = doc.Layers.FindId(parentid);
@@ -461,10 +482,11 @@ namespace JewellersHands
                     {
                         if (parentfoundlayer.Name.Equals("Gems"))
                         {
-                            add = false;
+                            
                         }
                     }
                 }
+                */
                 if (add)
                 {
                     allHidden.Add(obj);

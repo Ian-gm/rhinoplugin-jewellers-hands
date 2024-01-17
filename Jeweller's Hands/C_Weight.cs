@@ -109,11 +109,34 @@ namespace JewellersHands
 
         private void newViewCapture(RhinoView view, string path)
         {
-            var view_capture = new ViewCapture
+            /*var view_capture = new ViewCapture
             {
                 Width = view.ActiveViewport.Size.Width,
                 Height = view.ActiveViewport.Size.Height,
                 ScaleScreenItems = false,
+                DrawAxes = false,
+                DrawGrid = false,
+                DrawGridAxes = false,
+                TransparentBackground = false
+            };*/
+
+            float textSize = JHandsPlugin.Instance.BrepDisplay.caseTextSize;
+            float coef1 = ((float)480 / (float)view.ActiveViewport.Size.Height);
+            float coef2 = ((float)640 / (float)view.ActiveViewport.Size.Width);
+            float coef = coef1;
+            if (coef1 < coef2)
+            {
+                coef = coef2;
+            }
+            float calculation = (float)textSize * coef;
+            int newTextSize = (int)calculation;
+            JHandsPlugin.Instance.BrepDisplay.SetTextSize((int)newTextSize);
+
+            var view_capture = new ViewCapture
+            {
+                Width = 640,
+                Height = 480,
+                ScaleScreenItems = true,
                 DrawAxes = false,
                 DrawGrid = false,
                 DrawGridAxes = false,
@@ -157,13 +180,12 @@ namespace JewellersHands
                     }
                 }
             }
-                string prefix = "";
+            string prefix = "";
 
             if (largestPrefix > 0)
             {
                 prefix = "-" + largestPrefix.ToString();
             }
-
 
             if (null != bitmap)
             {
@@ -172,6 +194,8 @@ namespace JewellersHands
                 string finalPath = Path.Combine(docpath, filename);
                 bitmap.Save(finalPath, System.Drawing.Imaging.ImageFormat.Jpeg);
             }
+
+            JHandsPlugin.Instance.BrepDisplay.SetTextSize((int)textSize);
         }
 
         public List<Guid> GetBrepsTotalVolume(Rhino.RhinoDoc doc)
