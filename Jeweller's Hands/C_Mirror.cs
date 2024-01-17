@@ -31,14 +31,16 @@ namespace JewellersHands
         bool joinSelected = JHandsPlugin.Instance.joinSelected;
         List<Brep> newBrep = new List<Brep>();
         List<Brep> originalBrep = new List<Brep>();
+        List<ObjectAttributes> originalBrepAtt = new List<ObjectAttributes>();
         List<Curve> newCurve = new List<Curve>();
         List<Curve> originalCurve = new List<Curve>();
+        List<ObjectAttributes> originalCurveAtt = new List<ObjectAttributes>();
         List<Guid> IDs = new List<Guid>();
         Plane CPlane;
         int Quadrant = 1;
         bool firstPass = true;
 
-        private List<Brep> MirrorNewBrep(List<Brep> newBreps, Plane CPlane) //LOS NOMBRES DE LOS EJES ESTÁN AL REVÉS
+        private List<Brep> MirrorNewBrep(List<Brep> newBreps, Plane CPlane)
         {
             List<Brep> finalBreps = new List<Brep>();
             List<Brep> YtrimBreps = new List<Brep>();
@@ -445,8 +447,10 @@ namespace JewellersHands
             deleteSelected = JHandsPlugin.Instance.deleteSelected;
             newBrep.Clear();
             originalBrep.Clear();
+            originalBrepAtt.Clear();
             newCurve.Clear();
             originalCurve.Clear();
+            originalCurveAtt.Clear();
             IDs.Clear();
             firstPass = true;
 
@@ -479,6 +483,7 @@ namespace JewellersHands
                         isBrep = true;
                         newBrep.Add(objref.Brep());
                         originalBrep.Add(objref.Brep());
+                        originalBrepAtt.Add(objref.Object().Attributes);
                     }
                     else
                     {
@@ -486,6 +491,7 @@ namespace JewellersHands
                         isCurve = true;
                         newCurve.Add(objref.Curve());
                         originalCurve.Add(objref.Curve());
+                        originalCurveAtt.Add(objref.Object().Attributes);
                     }
                 }
             }
@@ -540,17 +546,31 @@ namespace JewellersHands
 
             if (isBrep)
             {
-                foreach (Brep aBrep in newBrep)
+                for (int i = 0; i < originalBrep.Count; i++)
                 {
-                    doc.Objects.AddBrep(aBrep);
+                    Brep oneBrep = originalBrep[i];
+                    ObjectAttributes att = originalBrepAtt[i];
+                    att.Visible = true;
+                    List<Brep> finalBreps = MirrorNewBrep(new List<Brep> { oneBrep }, CPlane);
+                    foreach (Brep aBrep in finalBreps)
+                    {
+                        doc.Objects.AddBrep(aBrep, att);
+                    }
                 }
             }
 
             if (isCurve)
             {
-                foreach (Curve aCurve in newCurve)
+                for (int i = 0; i < originalCurve.Count; i++)
                 {
-                    doc.Objects.AddCurve(aCurve);
+                    Curve oneCurve = originalCurve[i];
+                    ObjectAttributes att = originalCurveAtt[i];
+                    att.Visible = true;
+                    List<Curve> finalCurves = MirrorNewCurve(new List<Curve> { oneCurve }, CPlane);
+                    foreach(Curve aCurve in finalCurves)
+                    {
+                        doc.Objects.AddCurve(aCurve, att);
+                    }
                 }
             }
 

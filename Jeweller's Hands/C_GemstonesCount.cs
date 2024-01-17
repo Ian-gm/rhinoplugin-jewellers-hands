@@ -454,6 +454,12 @@ namespace JewellersHands
                 int layindex = obj.Attributes.LayerIndex;
                 Layer foundlayer = doc.Layers.FindIndex(layindex);
                 Guid parentid = foundlayer.ParentLayerId;
+
+                if(obj.Name == "Gem")
+                {
+                    add = false;
+                }
+                /*
                 if(parentid != null)
                 {
                     Layer parentfoundlayer = doc.Layers.FindId(parentid);
@@ -461,10 +467,11 @@ namespace JewellersHands
                     {
                         if (parentfoundlayer.Name.Equals("Gems"))
                         {
-                            add = false;
+                            
                         }
                     }
                 }
+                */
                 if (add)
                 {
                     allHidden.Add(obj);

@@ -39,7 +39,7 @@ namespace JewellersHands
         /// <summary>
         /// Returns the English name of this command.
         /// </summary>
-        public override string EnglishName => "JH_History";
+        public override string EnglishName => "XHistorySample";
 
         /// <summary>
         /// Rhino calls this function to run the command.

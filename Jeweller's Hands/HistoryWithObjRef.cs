@@ -19,7 +19,7 @@ namespace JewellersHands
         ///<summary>The only instance of the MyCommand command.</summary>
         public static HistoryWithObjRef Instance { get; private set; }
 
-        public override string EnglishName => "JH_HistoryObjRef";
+        public override string EnglishName => "XHistoryFiestTrial";
 
         protected override Result RunCommand(RhinoDoc doc, RunMode mode)
         {
