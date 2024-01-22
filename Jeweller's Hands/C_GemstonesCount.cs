@@ -216,6 +216,7 @@ namespace JewellersHands
         private void newViewCapture(RhinoView view, string path)
         {
             float textSize = JHandsPlugin.Instance.BrepDisplay.caseTextSize;
+            /*
             float coef1 = ((float)480 / (float)view.ActiveViewport.Size.Height);
             float coef2 = ((float)640 / (float)view.ActiveViewport.Size.Width);
             float coef = coef1;
@@ -231,6 +232,18 @@ namespace JewellersHands
             {
                 Width = 640,
                 Height = 480,
+                ScaleScreenItems = false,
+                DrawAxes = false,
+                DrawGrid = false,
+                DrawGridAxes = false,
+                TransparentBackground = false
+            };
+            */
+
+            var view_capture = new ViewCapture
+            {
+                Width = view.ActiveViewport.Size.Width,
+                Height = view.ActiveViewport.Size.Height,
                 ScaleScreenItems = false,
                 DrawAxes = false,
                 DrawGrid = false,
@@ -487,7 +500,7 @@ namespace JewellersHands
                     }
                 }
                 */
-                if (add)
+            if (add)
                 {
                     allHidden.Add(obj);
                 }
