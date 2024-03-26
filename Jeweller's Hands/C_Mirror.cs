@@ -554,7 +554,19 @@ namespace JewellersHands
                     List<Brep> finalBreps = MirrorNewBrep(new List<Brep> { oneBrep }, CPlane);
                     foreach (Brep aBrep in finalBreps)
                     {
-                        doc.Objects.AddBrep(aBrep, att);
+                        if (aBrep.IsValid)
+                        {
+                            doc.Objects.AddBrep(aBrep, att);
+                        }
+                        else
+                        {
+                            
+                            foreach(BrepFace face in aBrep.Faces)
+                            {
+                                Brep duplicateFace = face.DuplicateFace(true);
+                                doc.Objects.AddBrep(duplicateFace, att);
+                            }
+                        }
                     }
                 }
             }
