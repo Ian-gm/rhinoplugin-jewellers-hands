@@ -479,11 +479,28 @@ namespace JewellersHands
 
                     if (gb.HasBrepForm)
                     {
-                        //RhinoApp.WriteLine("this is a brep!");
-                        isBrep = true;
-                        newBrep.Add(objref.Brep());
-                        originalBrep.Add(objref.Brep());
-                        originalBrepAtt.Add(objref.Object().Attributes);
+                        if(gb.IsValid)
+                        {
+                            //RhinoApp.WriteLine("this is a brep!");
+                            isBrep = true;
+                            newBrep.Add(objref.Brep());
+                            originalBrep.Add(objref.Brep());
+                            originalBrepAtt.Add(objref.Object().Attributes);
+                        }
+                        else
+                        {
+                            ObjectAttributes brokenAtt = objref.Object().Attributes;
+
+                            brokenAtt.ColorSource = ObjectColorSource.ColorFromObject;
+                            brokenAtt.ObjectColor = System.Drawing.Color.DarkRed;
+                            doc.Objects.ModifyAttributes(objref, brokenAtt, true);
+                            objref.Object().CommitChanges();
+
+                            CleanVariables();
+
+                            RhinoApp.WriteLine("There's a broken object present in the selection");
+                            return Result.Failure;
+                        }
                     }
                     else
                     {
@@ -554,9 +571,13 @@ namespace JewellersHands
                     List<Brep> finalBreps = MirrorNewBrep(new List<Brep> { oneBrep }, CPlane);
                     foreach (Brep aBrep in finalBreps)
                     {
+
+
                         if (aBrep.IsValid)
                         {
-                            doc.Objects.AddBrep(aBrep, att);
+                            
+                        doc.Objects.AddBrep(aBrep, att);
+                            
                         }
                         else
                         {
