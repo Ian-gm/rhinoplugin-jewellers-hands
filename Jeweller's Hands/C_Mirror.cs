@@ -8,6 +8,7 @@ using Rhino.Commands;
 using Rhino.Display;
 using Rhino.DocObjects;
 using Rhino.Geometry;
+using Rhino.Geometry.Collections;
 using Rhino.Input.Custom;
 using Rhino.UI;
 
@@ -36,6 +37,8 @@ namespace JewellersHands
         List<Curve> originalCurve = new List<Curve>();
         List<ObjectAttributes> originalCurveAtt = new List<ObjectAttributes>();
         List<Guid> IDs = new List<Guid>();
+
+        List<Curve> manifoldEdges = new List<Curve>();
         Plane CPlane;
         int Quadrant = 1;
         bool firstPass = true;
@@ -489,12 +492,45 @@ namespace JewellersHands
                         }
                         else
                         {
-                            ObjectAttributes brokenAtt = objref.Object().Attributes;
+                            doc.Objects.UnselectAll();
 
-                            brokenAtt.ColorSource = ObjectColorSource.ColorFromObject;
-                            brokenAtt.ObjectColor = System.Drawing.Color.DarkRed;
-                            doc.Objects.ModifyAttributes(objref, brokenAtt, true);
-                            objref.Object().CommitChanges();
+                            BrepEdgeList EdgeList = objref.Brep().Edges;
+
+                            foreach(BrepEdge Edge in EdgeList)
+                            {
+                                if(Edge.AdjacentFaces().Length > 2)
+                                {
+                                    manifoldEdges.Add(Edge.EdgeCurve);
+                                }
+                            }
+
+                            ObjectAttributes att = new ObjectAttributes();
+
+                            Layer manifoldLayer = new Layer();
+                            manifoldLayer.Name = "Manifold Edges";
+
+                            int manifoldLayerInt = doc.Layers.Add(manifoldLayer);
+
+                            att.LayerIndex = manifoldLayerInt;
+                            att.ColorSource = ObjectColorSource.ColorFromObject;
+                            att.ObjectColor = System.Drawing.Color.Red;
+
+                            foreach (Curve Edge in manifoldEdges)
+                            {
+                                Guid curveId = doc.Objects.AddCurve(Edge, att);
+                            }
+
+                            RhinoObject[] manifoldObjects = doc.Objects.FindByLayer(doc.Layers.FindIndex(manifoldLayerInt));
+
+                            foreach(RhinoObject manifoldObject in manifoldObjects)
+                            {
+                                manifoldObject.Select(true);
+                            }
+
+                            foreach (Guid ID in IDs)
+                            {
+                                doc.Objects.Show(ID, true);
+                            }
 
                             CleanVariables();
 
