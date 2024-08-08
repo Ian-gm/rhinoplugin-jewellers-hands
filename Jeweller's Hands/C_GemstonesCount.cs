@@ -326,24 +326,27 @@ namespace JewellersHands
             {
                 bool LayerIsEmpty = true;
 
-                foreach (Rhino.DocObjects.RhinoObject obj in Rhino.RhinoDoc.ActiveDoc.Objects.FindByLayer(GemLayer))
+                if (GemLayer.IsVisible)
                 {
-                    if (obj.Name == "Gem" && !obj.IsHidden)
+                    foreach (Rhino.DocObjects.RhinoObject obj in Rhino.RhinoDoc.ActiveDoc.Objects.FindByLayer(GemLayer))
                     {
-                        LayerIsEmpty = false;
-                        break;
-                    }
-                }
-
-                if (!LayerIsEmpty)
-                {
-                    string[] GemLayerName = GemLayer.Name.Split(' ');
-                    if (!GemTypeNames.Contains(GemLayerName[0]))
-                    {
-                        GemTypeNames.Add(GemLayerName[0]);
+                        if (obj.Name == "Gem" && !obj.IsHidden)
+                        {
+                            LayerIsEmpty = false;
+                            break;
+                        }
                     }
 
-                    notEmptyGemLayerChildren.Add(GemLayer);
+                    if (!LayerIsEmpty)
+                    {
+                        string[] GemLayerName = GemLayer.Name.Split(' ');
+                        if (!GemTypeNames.Contains(GemLayerName[0]))
+                        {
+                            GemTypeNames.Add(GemLayerName[0]);
+                        }
+
+                        notEmptyGemLayerChildren.Add(GemLayer);
+                    }
                 }
             }
 
@@ -589,6 +592,10 @@ namespace JewellersHands
                         if (gemType == "RND")
                         {
                             caseSize = "⌀" + caseSizes[0];
+                        }
+                        else if (gemType == "TP")
+                        {
+                            caseSize = caseSizes[0] + "x" + caseSizes[1] + "x" + caseSizes[2];
                         }
                         else if (caseSizes.Length >= 2)
                         {
