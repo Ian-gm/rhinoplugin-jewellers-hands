@@ -581,6 +581,7 @@ namespace JewellersHands
                     string caseSize = "";
                     string[] gemCaseName = gemCase.Split(' ');
 
+
                     if(gemCaseName.Length < 1)
                     {
                         caseSize = "-";
@@ -593,11 +594,11 @@ namespace JewellersHands
                         {
                             caseSize = "⌀" + caseSizes[0];
                         }
-                        else if (gemType == "TP")
+                        else if (caseSizes.Length == 4)
                         {
                             caseSize = caseSizes[0] + "x" + caseSizes[1] + "x" + caseSizes[2];
                         }
-                        else if (caseSizes.Length >= 2)
+                        else if (caseSizes.Length <= 3)
                         {
                             caseSize = caseSizes[0] + "x" + caseSizes[1];
                         }
