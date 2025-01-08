@@ -27,7 +27,6 @@ namespace JewellersHands
 {
     public class C_MigrateMaterials : Rhino.Commands.Command
     {
-
         public C_MigrateMaterials()
         {
             // Rhino only creates one instance of each command class defined in a
@@ -43,6 +42,8 @@ namespace JewellersHands
 
         protected override Result RunCommand(RhinoDoc doc, RunMode mode)
         {
+            RhinoApp.WriteLine("Material migration routine starts...");
+
             bool flag = false;
 
             /*var dialog = new SelectFolderDialog();
@@ -120,7 +121,6 @@ namespace JewellersHands
             {
                 return Result.Failure;
             }
-
         }
     }
 }
