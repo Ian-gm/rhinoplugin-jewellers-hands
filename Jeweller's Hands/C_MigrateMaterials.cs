@@ -20,6 +20,7 @@ using System.Windows.Markup;
 using System.Windows.Input;
 using Eto.Forms;
 using Rhino.UI;
+using System.Data.SqlTypes;
 
 
 namespace JewellersHands
@@ -42,15 +43,31 @@ namespace JewellersHands
 
         protected override Result RunCommand(RhinoDoc doc, RunMode mode)
         {
-            var dialog = new SelectFolderDialog();
+            bool flag = false;
 
+            /*var dialog = new SelectFolderDialog();
             dialog.ShowDialog(RhinoEtoApp.MainWindow);
+            string folderPath = dialog.Directory;*/
 
-            string folderPath = dialog.Directory;
+            string folderPath = @"D:\Dropbox\Models\_Archive\_Assets";
+
+            if(!Directory.Exists(folderPath))
+            {
+                flag = true;
+                RhinoApp.WriteLine("Couldn't find the folder D:\\Dropbox\\Models\\_Archive\\_Assets");
+                return Result.Failure;
+            }
+
+            //Material logic
 
             int amountofmaterials = doc.RenderMaterials.Count;
 
-            if (amountofmaterials != 0)
+            if (amountofmaterials == 0)
+            {
+                RhinoApp.WriteLine("There are no materials in this file");
+                return Result.Failure;
+            }
+            else
             {
                 doc.RenderMaterials.BeginChange(RenderContent.ChangeContexts.Script);
                 for (int i = 0; i < amountofmaterials; i++)
@@ -60,13 +77,33 @@ namespace JewellersHands
                     RenderTexture aTexture = aMaterial.GetTextureFromUsage(RenderMaterial.StandardChildSlots.Diffuse);
                     aTexture.BeginChange(RenderContent.ChangeContexts.Script);
                     string texturefilePath = aTexture.Filename;
+                    string texturefileName = Path.GetFileName(texturefilePath);
 
-                    string newtexturefilePath = Path.Combine(folderPath, "texture_"+i.ToString()+Path.GetExtension(texturefilePath));
+                    //string newtexturefilePath = Path.Combine(folderPath, "texture_"+i.ToString()+Path.GetExtension(texturefilePath));
 
-                    File.Copy(texturefilePath, newtexturefilePath, true);
-                    
+                    string newtexturefilePath = Path.Combine(folderPath, texturefileName);
+
+                    if (File.Exists(newtexturefilePath))
+                    {
+                        RhinoApp.WriteLine(i.ToString() + "- " + texturefileName + " already exists");
+                    }
+                    else
+                    {
+                        try
+                        {
+                            File.Copy(texturefilePath, newtexturefilePath, false);
+
+                        }
+                        catch
+                        {
+                            RhinoApp.WriteLine(i.ToString() + "- Couldn't copy " + texturefileName);
+                            flag = true;
+                            continue;
+                        }
+                        RhinoApp.WriteLine(i.ToString() + "- " + texturefileName + " was copied to chosen folder");
+                    }
+
                     aTexture.Filename = newtexturefilePath;
-                    RhinoApp.WriteLine(aMaterial.Name + " = " + texturefilePath);
                     aTexture.EndChange();
                     aMaterial.EndChange();
                 }
@@ -74,9 +111,16 @@ namespace JewellersHands
 
             doc.RenderMaterials.EndChange();
 
-            //RhinoApp.WriteLine("Pick obj fotr material migrate", EnglishName);
+            if (!flag)
+            {
+                RhinoApp.WriteLine("Material migration was succesful");
+                return Result.Success;
+            }
+            else
+            {
+                return Result.Failure;
+            }
 
-            return Result.Success;
         }
     }
 }
