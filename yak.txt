@@ -1,6 +1,6 @@
 "C:\Program Files\Rhino 7\System\Yak.exe" build
 
-"C:\Program Files\Rhino 7\System\Yak.exe" push jewellershands-0.0.38-rh7_13-any.yak
+"C:\Program Files\Rhino 7\System\Yak.exe" push jewellershands-0.0.39-rh7_13-any.yak
 
 "C:\Program Files\Rhino 7\System\Yak.exe" search --all --prerelease gemstone
 
