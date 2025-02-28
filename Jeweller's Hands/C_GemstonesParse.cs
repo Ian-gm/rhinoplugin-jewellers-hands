@@ -468,7 +468,7 @@ namespace JewellersHands
             List<Guid> ObjGuid = new List<Guid>();
 
             Rhino.Input.Custom.GetObject go = new Rhino.Input.Custom.GetObject();
-            go.SetCommandPrompt("Select objects to calculate weight");
+            go.SetCommandPrompt("Select objects to parse into gems");
             go.AcceptUndo(true);
             go.EnablePreSelect(true, true);
             go.EnableSelPrevious(true);
@@ -535,6 +535,7 @@ namespace JewellersHands
                         {
                             aLayer = new Layer();
                             aLayer.Name = layerName;
+                            aLayer.Color = System.Drawing.Color.FromArgb(175, 208, 255);
 
                             int parentId = 0;
                             Layer parentLayer = doc.Layers.FindName("Gems");
