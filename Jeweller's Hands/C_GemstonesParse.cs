@@ -4,6 +4,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Runtime.Remoting;
 using System.Text;
 using System.Text.RegularExpressions;
 using Eto.Drawing;
@@ -33,6 +34,34 @@ namespace JewellersHands
 
         public override string EnglishName => "JH_GemstonesParse";
 
+        private string ParseGem(Brep brep, int edgeIndex, int faceIndex)
+        {
+            string layerName;
+
+            BrepEdge be = brep.Edges[edgeIndex];
+            Point3d pt = be.PointAtStart;
+
+            Point3d ptc;
+            BrepFace bf = brep.Faces[faceIndex];
+            double u;
+            double v;
+            bf.ClosestPoint(pt, out u, out v);
+            bf.Evaluate(u, v, 1, out ptc, out _);
+
+            Plane plane = new Plane(pt, new Vector3d(ptc - pt));
+
+            BoundingBox bb = brep.GetBoundingBox(plane);
+            Point3d min0 = bb.Corner(false, false, false);
+            Point3d maxX = bb.Corner(true, false, false);
+            Point3d maxZ = bb.Corner(false, false, true);
+
+            double X = min0.DistanceTo(maxX);
+            double Z = min0.DistanceTo(maxZ);
+
+            layerName = "RND" + "  " + Math.Round(X, 2) + "X" + Math.Round(Z, 2);
+
+            return layerName;
+        }
 
         protected override Result RunCommand(RhinoDoc doc, RunMode mode)
         {
@@ -496,42 +525,34 @@ namespace JewellersHands
 
             foreach (var objref in go.Objects())
             {
+                string layerName = "";
+                bool bake = true;
                 ObjectType currentObj = objref.Geometry().ObjectType;
+
                 if (currentObj == ObjectType.Brep)
                 {
                     var brep = objref.Brep();
                     Rhino.Geometry.Collections.BrepFaceList bfl = brep.Faces;
                     Rhino.Geometry.Collections.BrepEdgeList bel = brep.Edges;
-
-                    //RND 
+ 
                     if (bfl.Count == 127 && bel.Count == 286)
                     {
-                        BrepEdge be = brep.Edges[82];
-                        Point3d pt = be.PointAtStart;
+                        layerName = ParseGem(brep, 82, 1);
+                    }
+                    else if (bfl.Count == 73 && bel.Count == 128)
+                    {
+                        layerName = ParseGem(brep, 48, 40);
+                    }
+                    else
+                    {
+                        bake = false;
+                    }
 
-                        Point3d ptc;
-                        BrepFace bf = brep.Faces[1];
-                        double u;
-                        double v;
-                        bf.ClosestPoint(pt, out u, out v);
-                        bf.Evaluate(u, v, 1, out ptc, out _);
-
-                        Plane plane = new Plane(pt, new Vector3d(ptc - pt));
-
-                        BoundingBox bb = brep.GetBoundingBox(plane);
-                        Point3d min0 = bb.Corner(false, false, false);
-                        Point3d maxX = bb.Corner(true, false, false);
-                        Point3d maxZ = bb.Corner(false, false, true);
-
-                        double X = min0.DistanceTo(maxX);
-                        double Z = min0.DistanceTo(maxZ);
-
-                        string layerName = "RND" + "  " + Math.Round(X, 2) + "X" + Math.Round(Z, 2);
-
-                       
+                    if(bake)
+                    {
                         int layerIndex;
                         Layer aLayer = doc.Layers.FindName(layerName);
-                        if(aLayer == null)
+                        if (aLayer == null)
                         {
                             aLayer = new Layer();
                             aLayer.Name = layerName;
@@ -539,7 +560,7 @@ namespace JewellersHands
 
                             int parentId = 0;
                             Layer parentLayer = doc.Layers.FindName("Gems");
-                            if(parentLayer == null)
+                            if (parentLayer == null)
                             {
                                 Layer gemLayer = new Layer();
                                 gemLayer.Name = "Gems";
@@ -555,7 +576,6 @@ namespace JewellersHands
                             layerIndex = aLayer.Index;
                         }
 
-
                         var rhino_obj = objref.Object();
                         var attributes = rhino_obj.Attributes.Duplicate();
                         attributes.LayerIndex = layerIndex;
@@ -563,7 +583,6 @@ namespace JewellersHands
                         doc.Objects.ModifyAttributes(objref, attributes, false);
                     }
                 }
-
             }
 
             return Result.Success;
